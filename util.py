@@ -2,7 +2,6 @@
 Keeps the utility classes and functions.
 '''
 
-
 class TimeSegment:
     '''
     Defnition of a time segment.
