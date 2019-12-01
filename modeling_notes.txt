@@ -1,0 +1,212 @@
+General notes:
+
+** Doctors determine if a person needs say 30 visits, i.e. 2 week visit, and this
+reflects in the json file. All I have to do is to create enough time variables
+and let the optimizer do the rest. To do that, say you consider a 10-day
+schedule. Some people will have less need, hence their work will be done. So,
+you can have mixed type of patients together as well. I am good.
+
+------------------------------------
+Variable definitions:
+------------------------------------
+** s_di_pj -- start time of doctor di on patient d_j.
+
+
+-------------------------------------------------------------------------------
+Constraint definitions:
+-------------------------------------------------------------------------------
+
+------------------------------------
+start/finish time
+------------------------------------
+start/finish time -- each operation of a patient (visit) may start from 0800
+and must finish before 1600
+
+** s_di_pj \in {0800,...1600} handles the first requirement.
+
+** s_di_pj + D_di_pj <= 1600 \forall di \in {doctors to visit pi} and pj \in {all patients}
+
+To implement the second constraint above, I make a class PatientVar that holds information about pertaining variables and doctors that are to visit the patient.
+
+------------------------------------
+Monday morning mandatory registration
+------------------------------------
+
+
+------------------------------------
+patients operations spread between mon-wednesday
+------------------------------------
+extra variable:
+** y_k_pj \in {0, 1} -- if patient pj is visited on day k, k \in{mon,...,fri}
+
+
+
+------------------------------------
+all visits of the same patient by the same doctor must happends on differnet days
+------------------------------------
+use all different type of constraint
+
+
+------------------------------------
+OLD IMPLEMENTATIONS: START
+------------------------------------
+
+
+
+
+'''
+every element ni the time_slot_idx represent 15 minutes.
+Example, if
+a doctor is unavailabe from Mon@14:15 to Tue@09:00, then he is unavailable for
+1:45 + 1:00 = 2:45. One way of converting the duration to number of segments is
+to simply do 165/15=11 segments, where 165 is 2:45, which we converted manually.
+Another way is to simply use python timeobject to find calculate the difference
+in time and then divide. Another way which could be harder is to manually find
+the elemnet in the list at which Mon@14:15 and Tue@09:00 occur and subtract the
+indices to take the duration in terms of number of time segments of 15 min.
+'''
+#segment_len = 15
+# -----------------------------------------------------------------------------
+# Create optimization variables
+# -----------------------------------------------------------------------------
+
+'''
+This is a special case, where we schedule a team of doctors (machines), where
+there is only one doctor of each skill (one kind of machine).
+
+In a general case, there will be more than one doctor available for a
+certain operation, and a resource matching problem must be solved. this is
+analogues to solving an AGV problem of multiple AGVs for each kind of operation
+ex. for a visit of a logoped on a certain person, there are multiple doctors
+maching the required skill.
+
+I think a decompositional algorithm similar to bender for AGV should be
+suitable, where in the master problem task assignments to doctors are done.
+(of course, some preprocessing may also be required), hence TEAMS are
+identified. And in the subproblem, the scheduling of the teams are done.
+'''
+
+'''this is like the subproblem of a decompositional benders; in the sub TEAM
+SCHEDULING problem is solved. In the master problem, the TEAM BUILING problem
+is solved, where people are assigned to tasks (operations of patients).
+'''
+
+# Available doctors with their unique ids (i.e. machines in a jobshop problem)
+''' resource_ids = util.identify_resource(doctor_list)
+# All visits and durations of doctors on patients (i.e. operations in JSP).
+resource_usages = util.identify_resource_usage(resource_ids, patient_list)
+all_resource_names = list(resource_usages.keys())
+
+
+doctor_visits = []
+for doc in doctor_list:
+    new_doc = util.DoctorVisits(doc.id, doc.skill)
+
+    for patient in patient_list:
+
+        if(doc.skill in patient.treatment_activities):
+            new_visits = util.PatientVisits(patient.id, patient.name)
+
+            # no more visits than then available calendar days.
+            assert(len(policy_data.calendar_work_days) > len(
+                patient.treatment_activities[doc.skill]))
+
+            # visiting days are picked based on the number of treatment days
+            for i in range(patient.nb_treatment_days):
+                calendar_day_nb = policy_data.calendar_work_days[i]
+                new_visits.add_visit_day(calendar_day_nb)
+
+                for j, dur in enumerate(patient.treatment_activities[doc.skill]):
+                    new_visits.add_visit_option(
+                        calendar_day_nb, dur)  # scheduling horizon
+            new_doc.patients_list.append(new_visits)
+    doctor_visits.append(new_doc)
+
+
+# Generate variables
+mdl = CpoModel()
+
+doctor_visits_vars = []
+for doc in doctor_visits:
+
+    new_doc_vars = util.DoctorVisitsVars(doc.id, doc.skill)
+
+    for patient in doc.patients_list:
+        days = list(patient.visits_dict.keys())
+        days = sorted(days)
+
+        patient_visits_var = util.PatientVisitsVars(
+            patient.id, patient.patient_name)
+
+        nb_visits = len(patient.visits_dict[days[0]])
+
+        for j in range(nb_visits):
+            #name = 'S_' + 'k_' + str(doc.id) + '_i_' + str(patient.id) + '_j_' + str(j)
+            name = 'S_' + str(doc.id) + '_' + str(patient.id) + '_' + str(j)
+
+            begin_seg_idx, end_seg_idx = util.get_start_end_time_idx(
+                days[0], days[-1],  time_seg_idx)
+
+            patient_visits_var.visits_hours_vars.append(
+                mdl.integer_var(name=name, min=begin_seg_idx, max=end_seg_idx))
+
+        # add binary variables
+        for day in days:
+            patient_visits_var.visits_morning_vars[day] = []
+            for i in range(nb_visits):
+                dur = patient.visits_dict[day][i]
+                patient_visits_var.visits_morning_vars[day].append(
+                    mdl.binary_var())
+
+        patient_visits_var.patients_list.append(patient_visits_var)
+
+    doctor_visits_vars.append(new_doc_vars) '''
+
+
+#visits_by_docA_on_patient_0.add_visit_option(days_in_week[2], patient_list[0].treatment_activities[doctor_list['']])
+
+
+
+
+''' s_d_p = []
+s_INTERVAL_d_p = []
+#operation_end_vars = []
+start_t = time_seg_idx[0]
+end_t = time_seg_idx[-1]
+for resource_name in all_resource_names:
+
+    s_d_p.append([])
+    s_INTERVAL_d_p.append([])
+    # operation_end_vars.append([])
+    for operation in resource_usages[resource_name]:
+        op_len = operation[1]
+        op_name = ('p_' + str(operation[0]) + str('_d_') +
+                   str(resource_ids[resource_name]) + '_dur_' + str(op_len))
+
+        s_d_p[-1].append(mdl.integer_var(min=start_t,
+                                         max=end_t, name=op_name))
+        s_INTERVAL_d_p.append(mdl.interval_var(
+            start=start_t, end=end_t, length=op_len, name=op_name))
+        # operation_end_vars[-1].append(mdl.integer_var(min=start_t,
+        #                                          max=end_t, name=op_name))
+
+        # keep track of the operations belonging to doctors(machines) and jobs
+        # so you can easily post nooverlaps and other sequencing constraints...
+        # you are almost done my friend! '''
+
+
+""" mdl = CpoModel()
+for patient in patient_list:
+
+    pat_var = util.PatientVar()
+
+    for vis in range(patient.nb_arbetsterap_visits):
+        pat_var.arbetsterap_start_vars.append(
+            mdl.interval_var(time_seg_idx[0], time_seg_idx[-1]))
+
+    patient_var_list.append(pat_var) """
+
+
+------------------------------------
+OLD IMPLEMENTATIONS: END
+------------------------------------

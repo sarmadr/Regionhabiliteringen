@@ -1,0 +1,98 @@
+{
+    "python.pythonPath": "C:\\Users\\sarma\\Anaconda3\\envs\\py35\\python.exe",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "editor.minimap.enabled": false,
+    "editor.rulers": [
+    79
+    ],
+    "files.autoSave": "afterDelay",
+    "workbench.colorTheme": "Visual Studio Dark",
+    "editor.fontSize": 15,
+    "terminal.integrated.shell.windows": "C:\\WINDOWS\\System32\\cmd.exe",
+    "explorer.confirmDelete": false,
+    "code-runner.clearPreviousOutput": true,
+    "code-runner.customCommand": "activate py35",
+    "python.linter": "flake8",
+    "code-runner.saveAllFilesBeforeRun": true,
+    "code-runner.runInTerminal": true,
+    
+    
+    
+    
+    "latex-workshop.view.pdf.viewer": "tab",
+    "latex-workshop.view.pdf.zoom": "page-width",
+    "latex-workshop.latex.recipe.default": "lastUsed",
+    "latex-workshop.latex.autoBuild.run": "never",
+    "latex-workshop.view.pdf.hand": true,
+    "latex-workshop.latex.recipes":[
+      {
+        "name": "pdflatex x1",
+        "tools": [
+          "pdflatex"
+        ]
+      },
+      {
+        "name": "pdflatex ➞ biber ➞ pdflatex`×2",
+        "tools": [
+          "pdflatex",
+          "biber",
+          "pdflatex",
+          "pdflatex",
+        ]
+      },
+      {
+        "name": "latexmk 🔃",
+        "tools": [
+          "latexmk"
+        ]
+      }
+    ],
+    
+    "latex-workshop.latex.tools":[
+      {
+        "name": "latexmk",
+        "command": "latexmk",
+        "args": [
+          "-synctex=1",
+          "-interaction=nonstopmode",
+          "-file-line-error",
+          "-pdf",
+          "-outdir=%OUTDIR%",
+          "%DOC%"
+        ],
+        "env": {}
+      },
+      {
+        "name": "pdflatex",
+        "command": "pdflatex",
+        "args": [
+          "-synctex=1",
+          "-interaction=nonstopmode",
+          "-file-line-error",
+          "%DOC%"
+        ],
+        "env": {}
+      },
+      {
+        "name": "bibtex",
+        "command": "bibtex",
+        "args": [
+          "%DOCFILE%"
+        ],
+        "env": {}
+      },
+      {
+        "name": "biber",
+        "command": "bibtex",
+        "args": [
+          "%DOCFILE%"
+        ],
+        "env": {}
+      }
+    ],
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 89,
+    "latex-workshop.view.pdf.invert": 0,
+  }

@@ -1,0 +1,64 @@
+[
+    {
+        "profession": "lakare",
+        "name": "Pippi L",
+        "working_time_limit": 40,
+        "unavailable_times": 
+        [
+            {"from_day":"Mon", "from_hour": "0800", "to_day": "Mon", "to_hour": "1200"},
+            {"from_day":"Tue", "from_hour": "1545", "to_day": "Wed", "to_hour": "0930"}
+        ],
+        "visit_time_pref": "AM"
+    },
+    
+    {
+        "profession": "logoped",
+        "name": "Astrid L",
+        "working_time_limit": 35,
+        "unavailable_times": 
+        [
+        ],
+        "visit_time_pref": "PM"
+    },
+    
+    {
+        "profession": "fysioterap",
+        "name": "Bamse V",
+        "working_time_limit": 40,
+        "unavailable_times": 
+        [
+        ],
+        "visit_time_pref": "AM"
+    },
+    
+    {
+        "profession": "arbetsterap",
+        "name": "Anna B",
+        "working_time_limit": 40,
+        "unavailable_times": 
+        [
+        ],
+        "visit_time_pref": "AM"
+    },
+    
+    {
+        "profession": "psykolog",
+        "name": "Johan E",
+        "working_time_limit": 40,
+        "unavailable_times": 
+        [
+        ],
+        "visit_time_pref": "AM"
+    },
+    
+    {
+        "profession": "pedagog",
+        "name": "Emma V",
+        "working_time_limit": 40,
+        "unavailable_times": 
+        [
+        ],
+        "visit_time_pref": "AM"
+    }
+    
+]

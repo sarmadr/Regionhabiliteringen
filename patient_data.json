@@ -1,0 +1,33 @@
+[
+    {
+        "priority": 1,
+        "name": "p1",
+        "age": 10,
+        "treatment_days": 5,
+        "activities": 
+        [
+            {"lakare": 30},
+            {"logoped": 45}, {"logoped": 45}, {"logoped": 45},
+            {"fysioterap": 45}, {"fysioterap": 45}, {"fysioterap": 45},
+            {"psykolog": 45}, {"psykolog": 45}, {"psykolog": 45},
+            {"pedagog": 45}, {"pedagog": 45}, {"pedagog": 45},
+            {"arbetsterap": 45}, {"arbetsterap": 120}, {"arbetsterap": 45}
+        ]
+    },
+    {
+        "priority": 1,
+        "name": "p2",
+        "age": 10,
+        "treatment_days": 10,
+        "activities": 
+        [
+            {"lakare": 30},
+            {"logoped": 45}, {"logoped": 45}, {"logoped": 45},
+            {"fysioterap": 45}, {"fysioterap": 45}, {"fysioterap": 45},
+            {"psykolog": 45}, {"psykolog": 45}, {"psykolog": 45},
+            {"pedagog": 45}, {"pedagog": 45}, {"pedagog": 45},
+            {"arbetsterap": 45}, {"arbetsterap": 120}, {"arbetsterap": 45}
+        ]
+    }
+
+]
