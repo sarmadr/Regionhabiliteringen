@@ -165,15 +165,17 @@ for doc in doctor_list:
 CONSTRAINT:
 For the same# doctor and the same patient; One visit per day at most, a
 doctor doesn't see the same patient more than# once, per day.
+
 sum over j (x_{k,i,j}^{l} + y_{k,i,j}^{l} <= 1) ; \forall (k, i, l)
 '''
-for pat in patient_list:
-    for doc in pat.visit_vars_dict:
+for pat in patient_list:  # i
+    for doc in pat.visit_vars_dict:  # k
 
         nb_doc_sessions = len(pat.visit_vars_dict[doc])
         for l in range(pat.nb_treatment_days):
             cons = mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l] +
-                           pat.visit_vars_dict[doc][j].y_vars[l]for j in range(nb_doc_sessions)) <= 1
+                           pat.visit_vars_dict[doc][j].y_vars[l]
+                           for j in range(nb_doc_sessions)) <= 1
             # print(cons)
             mdl.add(cons)
 
@@ -184,6 +186,7 @@ Combination of two constraints in form of reified constraints:
 
 (1) exactly one visit instance among all possible visit instances of the same
 visit must be done, among all days of the scheduling horizon.
+
 sum over l (x_{k,i,j}^{l} + y_{k,i,j}^{l} <= 1) ; \forall (k, i, j)
 
 (2) If a patient is admitted, all his/her visit sessions must be done.
@@ -191,8 +194,8 @@ Hence, only if z_i == 1 the constraint above must hold
 It's possible to manually force an admittance to happen, if it has waited
 long enough, just by setting z_i=1 for patient i.
 '''
-for pat in patient_list:
-    for doc in pat.visit_vars_dict:
+for pat in patient_list:  # i
+    for doc in pat.visit_vars_dict:  # k
         nb_doc_sessions = len(pat.visit_vars_dict[doc])
         for j in range(nb_doc_sessions):
             cons = mdl.if_then(pat.is_admitted_var == 1,
@@ -205,14 +208,26 @@ for pat in patient_list:
 
 '''
 CONSTRAINT:
+For the same patient and doctor, at least some visit sessions must happen
+in the morning. This is because children become tired in the afternoon, and 
+harder to work with, which makes it more difficult for the doctor to conduct
+diagnosis. Hence each doctor wants to do at least some visits of the same
+patient in the morning.
 
+sum_sum_j_l( y_{k,i,j}^{l}) <= sum_sum_j_l(x_{k,i,j}^{l}) + 1 ; \forall (k, i)
 '''
+for pat in patient_list:  # i
+    for doc in pat.visit_vars_dict:  # k
+        nb_doc_sessions = len(pat.visit_vars_dict[doc])
+        cons = (mdl.sum(pat.visit_vars_dict[doc][j].y_vars[l]
+                        for j in range(nb_doc_sessions)
+                        for l in range(pat.nb_treatment_days)) <=
 
-
-
-
-
-
+                mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l]
+                        for j in range(nb_doc_sessions)
+                        for l in range(pat.nb_treatment_days)) + 1)
+        # print(cons)
+        mdl.add(cons)
 
 
 '''
