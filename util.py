@@ -28,6 +28,8 @@ class PatientData:
     Attributes:
     id -- unique patient identifier.
     visit_vars -- dict{'doctor_type': list<Visits()>} 
+    is_admitted_var -- boolian decision variable. The value is decided by the
+    sovler.
     '''
 
     def __init__(self):
@@ -39,6 +41,7 @@ class PatientData:
         self.id = None
 
         self.visit_vars_dict = {}
+        self.is_admitted_var = None
 
 
 def group_treatment_activities(patient_dic):

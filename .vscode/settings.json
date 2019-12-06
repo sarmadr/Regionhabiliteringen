@@ -93,6 +93,6 @@
       }
     ],
     "editor.wordWrap": "wordWrapColumn",
-    "editor.wordWrapColumn": 89,
+    "editor.wordWrapColumn": 189,
     "latex-workshop.view.pdf.invert": 0,
   }

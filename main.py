@@ -7,7 +7,7 @@ import json
 # Parameters
 # -----------------------------------------------------------------------------
 # morning_start = 800  # military hours
-#afternoon_end = 1600
+# afternoon_end = 1600
 
 
 # -----------------------------------------------------------------------------
@@ -78,7 +78,7 @@ with open('policy_config.json', 'r') as f:
 # -----------------------------------------------------------------------------
 # modeling the time.
 
-#days_in_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+# days_in_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
 hours_in_day = ['0800', '0815', '0830', '0845',
                 '0900', '0915', '0930', '0945',
@@ -106,6 +106,12 @@ for i in policy_data.calendar_work_days:
 
 mdl = CpoModel()
 all_visits = []
+
+# Set admittance variables.
+for pat in patient_list:
+    name = 'z_' + str(pat.id)
+    pat.is_admitted_var = mdl.binary_var(name=name)
+
 # follow indexing system of X_{k,i,j}^{l}: {doc,patient, visit session}, {day}
 for doc in doctor_list:
     for pat in patient_list:
@@ -154,24 +160,74 @@ for doc in doctor_list:
 # Constraints
 # -----------------------------------------------------------------------------
 
-# ---------------------------------------
-# For the same# doctor and the same patient;
-# One visit per day at most, a doctor doesn't 
-# see the same patient more than# once, per day.
-# sum over j (x_{k,i,j}^{l} + y_{k,i,j}^{l} <= 1) ; \forall (k, i, l)
-# ---------------------------------------
 
+'''
+CONSTRAINT:
+For the same# doctor and the same patient; One visit per day at most, a
+doctor doesn't see the same patient more than# once, per day.
+sum over j (x_{k,i,j}^{l} + y_{k,i,j}^{l} <= 1) ; \forall (k, i, l)
+'''
 for pat in patient_list:
     for doc in pat.visit_vars_dict:
-        
+
         nb_doc_sessions = len(pat.visit_vars_dict[doc])
-        for i in range(pat.nb_treatment_days):
-            cons = mdl.sum(pat.visit_vars_dict[doc][j].x_vars[i] + pat.visit_vars_dict[doc][j].y_vars[i]for j in range(nb_doc_sessions)) <= 1
-            print(cons)            
+        for l in range(pat.nb_treatment_days):
+            cons = mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l] +
+                           pat.visit_vars_dict[doc][j].y_vars[l]for j in range(nb_doc_sessions)) <= 1
+            # print(cons)
             mdl.add(cons)
 
-            
-            
-        
+
+'''
+CONSTRAINT:
+Combination of two constraints in form of reified constraints:
+
+(1) exactly one visit instance among all possible visit instances of the same
+visit must be done, among all days of the scheduling horizon.
+sum over l (x_{k,i,j}^{l} + y_{k,i,j}^{l} <= 1) ; \forall (k, i, j)
+
+(2) If a patient is admitted, all his/her visit sessions must be done.
+Hence, only if z_i == 1 the constraint above must hold
+It's possible to manually force an admittance to happen, if it has waited
+long enough, just by setting z_i=1 for patient i.
+'''
+for pat in patient_list:
+    for doc in pat.visit_vars_dict:
+        nb_doc_sessions = len(pat.visit_vars_dict[doc])
+        for j in range(nb_doc_sessions):
+            cons = mdl.if_then(pat.is_admitted_var == 1,
+                               mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l] +
+                                       pat.visit_vars_dict[doc][j].y_vars[l]
+                                       for l in range(pat.nb_treatment_days)) == 1)
+            # print(cons)
+            mdl.add(cons)
+
+
+'''
+CONSTRAINT:
+
+'''
+
+
+
+
+
+
+
+
+'''
+Objective function: 
+maximize the number of admitted patients.
+'''
+nb_admitted_patients = mdl.integer_var()
+mdl.add(nb_admitted_patients == mdl.sum(
+    pat.is_admitted_var for pat in patient_list))
+mdl.add(mdl.maximize(nb_admitted_patients))
+
+# Solve
+msol = mdl.solve(LogVerbosity='Quiet', Workers=1)
+print("Solution status: " + msol.get_solve_status())
+if msol:
+    print('nb_admitted_patients = ', msol.get_objective_values()[0])
 
 print('Done!')
