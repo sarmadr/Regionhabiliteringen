@@ -283,6 +283,41 @@ for pat in patient_list:  # i
                 mdl.add(cons_lb_pm)
 
 
+'''
+CONSTRAINT:
+NoOverlap 1: No simultaneous visit of the same patient by different doctors.
+
+'''
+for pat in patient_list:  # i
+
+    # we need this to avoid checking (i,j) and (j,i) twice, which are the same
+    # pairs essentially. But since we have dictionary but not list, cannot easily
+    #  adjust the loop iterator
+    # NB! must be in the first for loop to restart for each patient
+    doctor_pairs_compared = []
+
+    for doc1 in pat.visit_vars_dict:  # k1
+        for doc2 in pat.visit_vars_dict:  # k2
+            if(doc1 != doc2 and (doc1, doc2) not in doctor_pairs_compared
+               and (doc2, doc1) not in doctor_pairs_compared):
+                doctor_pairs_compared.append((doc1, doc2))
+
+                nb_doc1_sessions = len(pat.visit_vars_dict[doc1])  # j1
+                nb_doc2_sessions = len(pat.visit_vars_dict[doc2])  # j2
+
+                for j1 in range(nb_doc1_sessions):
+                    for j2 in range(nb_doc2_sessions):
+                        dur1 = int(
+                            pat.visit_vars_dict[doc1][j1]._session_dur / segment_len)
+                        dur2 = int(
+                            pat.visit_vars_dict[doc2][j2]._session_dur / segment_len)
+
+                        s1 = pat.visit_vars_dict[doc1][j1].s_var
+                        s2 = pat.visit_vars_dict[doc2][j2].s_var
+
+                        cons = util.no_overlap_ilog(s1, s2, dur1, dur2, mdl)
+                        mdl.add(cons)
+
 
 '''
 Objective function:
@@ -294,7 +329,7 @@ mdl.add(nb_admitted_patients == mdl.sum(
 mdl.add(mdl.maximize(nb_admitted_patients))
 
 # Solve
-msol = mdl.solve(LogVerbosity='Quiet', Workers=1)
+msol = mdl.solve(LogVerbosity='Terse', Workers=1)
 print("Solution status: " + msol.get_solve_status())
 if msol:
     print('nb_admitted_patients = ', msol.get_objective_values()[0])

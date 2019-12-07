@@ -224,3 +224,10 @@ class Visits():
 
         self._session_dur = session_dur
         self._session_idx = session_idx
+
+
+def no_overlap_ilog(s1, s2, d1, d2, mdl):
+    '''
+
+    '''
+    return mdl.logical_or(s1 + d1 <= s2, s2 + d2 <= s1)
