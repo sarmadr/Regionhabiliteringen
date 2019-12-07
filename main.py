@@ -8,6 +8,7 @@ import json
 # -----------------------------------------------------------------------------
 # morning_start = 800  # military hours
 # afternoon_end = 1600
+segment_len = 15  # the smallest resolution of time segment in miutes
 
 
 # -----------------------------------------------------------------------------
@@ -127,12 +128,15 @@ for doc in doctor_list:
                 vis.set_session(ses_idx, ses_dur)
 
                 # add s variable
+                # NB! MAYBE LATER SET THE DOMAIN TO TAKE ALL POSSIBLE VALUES
+                # OF THE WHOLE WCHEDULING HOROZON: to see if more patients
+                # can be fit into the schedule.
                 name = 'S_' + str(doc.id) + '_' + \
                     str(pat.id) + '_' + str(ses_idx)
                 begin_seg_idx, end_seg_idx = util.get_start_end_time_idx(
                     days[0], days[-1],  time_seg_idx)
 
-                vis.s_tm_var = mdl.integer_var(
+                vis.s_var = mdl.integer_var(
                     name=name, min=begin_seg_idx, max=end_seg_idx)
 
                 # add binary variables for morning and afternoon possibility
@@ -171,7 +175,7 @@ sum over j (x_{k,i,j}^{l} + y_{k,i,j}^{l} <= 1) ; \forall (k, i, l)
 for pat in patient_list:  # i
     for doc in pat.visit_vars_dict:  # k
 
-        nb_doc_sessions = len(pat.visit_vars_dict[doc])
+        nb_doc_sessions = len(pat.visit_vars_dict[doc])  # j
         for l in range(pat.nb_treatment_days):
             cons = mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l] +
                            pat.visit_vars_dict[doc][j].y_vars[l]
@@ -196,7 +200,7 @@ long enough, just by setting z_i=1 for patient i.
 '''
 for pat in patient_list:  # i
     for doc in pat.visit_vars_dict:  # k
-        nb_doc_sessions = len(pat.visit_vars_dict[doc])
+        nb_doc_sessions = len(pat.visit_vars_dict[doc])  # j
         for j in range(nb_doc_sessions):
             cons = mdl.if_then(pat.is_admitted_var == 1,
                                mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l] +
@@ -218,7 +222,7 @@ sum_sum_j_l( y_{k,i,j}^{l}) <= sum_sum_j_l(x_{k,i,j}^{l}) + 1 ; \forall (k, i)
 '''
 for pat in patient_list:  # i
     for doc in pat.visit_vars_dict:  # k
-        nb_doc_sessions = len(pat.visit_vars_dict[doc])
+        nb_doc_sessions = len(pat.visit_vars_dict[doc])  # j
         cons = (mdl.sum(pat.visit_vars_dict[doc][j].y_vars[l]
                         for j in range(nb_doc_sessions)
                         for l in range(pat.nb_treatment_days)) <=
@@ -231,7 +235,57 @@ for pat in patient_list:  # i
 
 
 '''
-Objective function: 
+CONSTRAINT:
+Connect high-level binary day variables with low-level integer time variables.
+
+(1): if a visit is done in the morning, limit the time_variables to be in
+the morning; alpha is the index of day l @ '0800', and betta is index of the
+same day l @ '1200'. The exact hours enforced to the constraint may be changed
+based on need of the team. For example, maybe visit must end before '1100', in
+which case, betta is set to '1100'
+
+if(x_{k,i,j}^{l} == 1) ==> alpha<= s_{k,i,j} + D_{k,i,j} <= betta;
+\forall (k, i, j, l)
+
+(2): Same as (1), but for the afternoon variables y_{k,i,j}^{l}
+'''
+for pat in patient_list:  # i
+    for doc in pat.visit_vars_dict:  # k
+        nb_doc_sessions = len(pat.visit_vars_dict[doc])  # j
+        for j in range(nb_doc_sessions):
+
+            # some sessions have longer lengts; ex. arebetstera. has 45/120
+            dur = int(pat.visit_vars_dict[doc][j]._session_dur / segment_len)
+
+            days = policy_data.calendar_work_days[0:pat.nb_treatment_days]
+
+            for l_idx, l_val in enumerate(days):
+                vis_s = util.get_time_idx(l_val, '0800', time_seg_idx)
+                vis_e = util.get_time_idx(l_val, '1200', time_seg_idx)
+
+                # morning
+                cons_ub_am = mdl.if_then(pat.visit_vars_dict[doc][j].x_vars[l_idx] == 1,
+                                         pat.visit_vars_dict[doc][j].s_var + dur <= vis_e)
+
+                cons_lb_am = mdl.if_then(pat.visit_vars_dict[doc][j].x_vars[l_idx] == 1,
+                                         vis_s <= pat.visit_vars_dict[doc][j].s_var)
+
+                # afternoon
+                cons_ub_pm = mdl.if_then(pat.visit_vars_dict[doc][j].y_vars[l_idx] == 1,
+                                         pat.visit_vars_dict[doc][j].s_var + dur <= vis_e)
+
+                cons_lb_pm = mdl.if_then(pat.visit_vars_dict[doc][j].y_vars[l_idx] == 1,
+                                         vis_s <= pat.visit_vars_dict[doc][j].s_var)
+
+                mdl.add(cons_ub_am)
+                mdl.add(cons_lb_am)
+                mdl.add(cons_ub_pm)
+                mdl.add(cons_lb_pm)
+
+
+
+'''
+Objective function:
 maximize the number of admitted patients.
 '''
 nb_admitted_patients = mdl.integer_var()
@@ -244,5 +298,8 @@ msol = mdl.solve(LogVerbosity='Quiet', Workers=1)
 print("Solution status: " + msol.get_solve_status())
 if msol:
     print('nb_admitted_patients = ', msol.get_objective_values()[0])
+
+
+#print(util.get_time_idx(12, '0800', time_seg_idx))
 
 print('Done!')
