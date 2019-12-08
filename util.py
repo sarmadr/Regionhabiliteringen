@@ -5,7 +5,12 @@ The utility classes and functions.
 
 class TimeSegment:
     '''
-    Defnition of a time segment.
+    Defnition of a time segment. Use case: making a doctor unavailable for a
+    period of time.
+
+    Attributes:
+    * from_day -- calendar day of the start of segment
+    * from_hour -- <string> start time of unavailability, military time: 'hhmm'
 
     * Example:
     from_day = 'Mon', from_time = '0900'
@@ -14,7 +19,6 @@ class TimeSegment:
 
     def __init__(self):
 
-        # self.time_stamp = None
         self.from_day = None
         self.from_hour = None
 
@@ -240,4 +244,3 @@ def no_overlap_ilog(s1, s2, d1, d2, mdl):
 
     '''
     return mdl.logical_or(s1 + d1 <= s2, s2 + d2 <= s1)
-

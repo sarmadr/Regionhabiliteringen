@@ -5,8 +5,8 @@
         "working_time_limit": 40,
         "unavailable_times": 
         [
-            {"from_day":"Mon", "from_hour": "0800", "to_day": "Mon", "to_hour": "1200"},
-            {"from_day":"Tue", "from_hour": "1545", "to_day": "Wed", "to_hour": "0930"}
+            {"from_day": 1, "from_hour": "0800", "to_day": 1, "to_hour": "1200"},
+            {"from_day": 2, "from_hour": "1545", "to_day": 2, "to_hour": "0930"}
         ],
         "visit_time_pref": "AM"
     },

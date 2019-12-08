@@ -337,7 +337,7 @@ session visit on the same patient, nor on different patients.
 '''
 for doc in doctor_list:
     nb_visits = len(doc.visit_vars)
-    for i in range(nb_visits-1): #NB! are the range bounds correct?
+    for i in range(nb_visits-1):  # NB! are the range bounds correct?
         for j in range(i+1, nb_visits):
 
             s1 = doc.visit_vars[i].s_var
@@ -356,21 +356,61 @@ Partial orders; for the same doctor and patient, since most visit sessions are
 identical in terms of duration, just assign a simple order to them without
 affecting the solution much. 
 
-NB! For arebetstherap. the long 120 m order must come at least second. It would
-be so, if it comes second in the json. It can also be automatically taken care
-of, using a simple if condition, that dissalows it to be the first if the visit
-has 120 minutes of duration.
+# is it correct? does it conflict with the nooverlaps?
+
+# maybe it helps with breaking symmetries.
 '''
 
-# is it correct? does it conflict with the nooverlaps?
-''' for pat in patient_list:  # i
+
+""" for pat in patient_list:  # i
     for doc in pat.visit_vars_dict:  # k
         nb_doc_sessions = len(pat.visit_vars_dict[doc])  
         for i in range(nb_doc_sessions-1):
             for j in range(i+1, nb_doc_sessions):
                 s1 = pat.visit_vars_dict[doc][i].s_var
                 s2 = pat.visit_vars_dict[doc][j].s_var
-                mdl.add(s1<=s2 + 1) '''
+                mdl.add(s1<=s2 + 1) """
+
+
+'''
+CONSTRAINT:
+For arbetstrap. make sure the session(s) with 120 minute happens as the second
+session or later, but not the first.
+'''
+
+cons_sess_dur = 120
+for pat in patient_list:  # i
+    long_sessions = []
+    short_sessions = []
+
+    for doc in pat.visit_vars_dict:
+        if(doc == 'arbetsterap'):
+            nb_doc_sessions = len(pat.visit_vars_dict[doc])
+            for i in range(nb_doc_sessions):
+                if(pat.visit_vars_dict[doc][i]._session_dur == cons_sess_dur):
+                    long_sessions.append(pat.visit_vars_dict[doc][i].s_var)
+                else:
+                    short_sessions.append(pat.visit_vars_dict[doc][i].s_var)
+
+            # NB! if short_sessions[0:1] long sess. happen after first short one
+            # NB! if just short_sessions, long sess. happen after all short ones
+            for s1 in short_sessions[0:1]:
+                for s2 in long_sessions:
+                    mdl.add(s1 <= s2)  # need +1?
+
+
+'''
+CONSTRAINT:
+Availability of doctors: A doctor may not be available for a short period of
+time due to sickness, travel, etc. But other than that they can participate in
+treatment.
+'''
+#for doc in doctor_list:
+
+
+
+
+
 
 
 '''
@@ -387,7 +427,7 @@ msol = mdl.solve(LogVerbosity='Terse', Workers=1)
 print("Solution status: " + msol.get_solve_status())
 if msol:
     print('nb_admitted_patients =', msol.get_objective_values()[0])
-    
+
     # get sol
     for pat in patient_list:  # i
 
@@ -400,21 +440,16 @@ if msol:
             for j in range(nb_doc_sessions):
                 val = msol[pat.visit_vars_dict[doc][j].s_var]
                 day, time = util.get_time_by_idx(val, time_seg_idx)
-                sol_array.append((val, day, time, doc, pat.visit_vars_dict[doc][j]._session_dur))
-        
-        #for row in sol_array:
+                sol_array.append(
+                    (val, day, time, doc, pat.visit_vars_dict[doc][j]._session_dur))
+
+        # for row in sol_array:
         #    print(row)
         #print('SORTING NOW')
-        
+
         sol_array.sort(key=itemgetter(0))
         for row in sol_array:
             print(row[1:])
-
-                
-                
-                
-
-
 
 
 #print(util.get_time_idx(12, '0800', time_seg_idx))
