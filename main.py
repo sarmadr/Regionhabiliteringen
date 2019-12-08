@@ -32,7 +32,9 @@ with open('patient_data.json', 'r') as f:
         temp_patient.name = pat['name']
         temp_patient.age = pat['age']
         temp_patient.nb_treatment_days = pat['treatment_days']
+        temp_patient.nb_visit_days = pat['visit_days']
         temp_patient.break_dur = pat['break_dur']
+        temp_patient.lunch_break = pat['lunch_break']
 
         # Treatment plan/resource usage
         # temp_patient.resource_usage = pat['activities']
@@ -72,10 +74,9 @@ with open('policy_config.json', 'r') as f:
     policy_dict = json.load(f)
     # Policies are simple so use built-in dictionary
     policy_data.work_hours = policy_dict['work_hours']
-    policy_data.lunch_break = policy_dict['lunch_break']
-    policy_data.short_break = policy_dict['short_break']
     policy_data.other_activity_duration = policy_dict['other_activity_duration']
     policy_data.calendar_work_days = policy_dict['calendar_work_days']
+    policy_data.calendar_visit_days = policy_dict['calendar_visit_days']
 
 # -----------------------------------------------------------------------------
 # Create constants
@@ -122,7 +123,15 @@ for doc in doctor_list:
 
         if(doc.skill in pat.treatment_activities):  # then visit!
 
-            days = policy_data.calendar_work_days[0:pat.nb_treatment_days]
+            # NB! [0:pat.nb_visit_days] slices the visiting days available
+            # in the scheuling horizon to exactly the number of days patient
+            # should be visited, and forces the selection of the first 
+            # nb_visit_days. So the patient wont stay in the center for more
+            # days than necessary. But maby enforcing the paitent to come
+            # exactly in the first nb_visit_days is too limiting? It depends
+            # on the top-level assignment sch
+            days = policy_data.calendar_visit_days[0:pat.nb_visit_days]
+            
             # For each mandatory session generate one S_kij variable,
             # and list of binary vars for each possible day
             for ses_idx, ses_dur in enumerate(pat.treatment_activities[doc.skill]):
@@ -131,16 +140,24 @@ for doc in doctor_list:
                 vis.set_session(ses_idx, ses_dur)
 
                 # add s variable
-                # NB! MAYBE LATER SET THE DOMAIN TO TAKE ALL POSSIBLE VALUES
-                # OF THE WHOLE WCHEDULING HOROZON: to see if more patients
-                # can be fit into the schedule.
                 name = 'S_' + str(doc.id) + '_' + \
                     str(pat.id) + '_' + str(ses_idx)
-                begin_seg_idx, end_seg_idx = util.get_start_end_time_idx(
-                    days[0], days[-1],  time_seg_idx)
-
+                
+                
+                # construct the variable domain using global index list time_seg_idx
+                # fetch all indices for any day existing in visiting days (but
+                # not the general treatment days, because they include doctors
+                # team visits as well, and that should not be used for patient
+                # visit purposes.)
+                domain = []
+                for day in days:
+                    sub_domain = util.get_start_end_time_idx(day, day, time_seg_idx)
+                    domain.extend(list(range(sub_domain[0], sub_domain[-1]+1)))
+               
+                
+                
                 vis.s_var = mdl.integer_var(
-                    name=name, min=begin_seg_idx, max=end_seg_idx)
+                    name=name, min=domain[0], max=domain[-1])
 
                 # add binary variables for morning and afternoon possibility
                 for day in days:
@@ -179,7 +196,7 @@ for pat in patient_list:  # i
     for doc in pat.visit_vars_dict:  # k
 
         nb_doc_sessions = len(pat.visit_vars_dict[doc])  # j
-        for l in range(pat.nb_treatment_days):
+        for l in range(pat.nb_visit_days):
             cons = mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l] +
                            pat.visit_vars_dict[doc][j].y_vars[l]
                            for j in range(nb_doc_sessions)) <= 1
@@ -208,7 +225,7 @@ for pat in patient_list:  # i
             cons = mdl.if_then(pat.is_admitted_var == 1,
                                mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l] +
                                        pat.visit_vars_dict[doc][j].y_vars[l]
-                                       for l in range(pat.nb_treatment_days)) == 1)
+                                       for l in range(pat.nb_visit_days)) == 1)
             # print(cons)
             mdl.add(cons)
 
@@ -228,11 +245,11 @@ for pat in patient_list:  # i
         nb_doc_sessions = len(pat.visit_vars_dict[doc])  # j
         cons = (mdl.sum(pat.visit_vars_dict[doc][j].y_vars[l]
                         for j in range(nb_doc_sessions)
-                        for l in range(pat.nb_treatment_days)) <=
+                        for l in range(pat.nb_visit_days)) <=
 
                 mdl.sum(pat.visit_vars_dict[doc][j].x_vars[l]
                         for j in range(nb_doc_sessions)
-                        for l in range(pat.nb_treatment_days)) + 1)
+                        for l in range(pat.nb_visit_days)) + 1)
         # print(cons)
         mdl.add(cons)
 
@@ -260,11 +277,18 @@ for pat in patient_list:  # i
             # some sessions have longer lengts; ex. arebetstera. has 45/120
             dur = int(pat.visit_vars_dict[doc][j]._session_dur / segment_len)
 
-            days = policy_data.calendar_work_days[0:pat.nb_treatment_days]
+            days = policy_data.calendar_visit_days[0:pat.nb_visit_days]
 
+            lunch_start = ''
+            if(pat.lunch_break < 120):
+                lunch_start = '1200'
+            elif(pat.lunch_break >= 120):
+                lunch_start = '1100'
+            
+            
             for l_idx, l_val in enumerate(days):
                 vis_s = util.get_time_idx(l_val, '0800', time_seg_idx)
-                vis_e = util.get_time_idx(l_val, '1200', time_seg_idx)
+                vis_e = util.get_time_idx(l_val, lunch_start, time_seg_idx)
 
                 # morning
                 cons_ub_am = mdl.if_then(pat.visit_vars_dict[doc][j].x_vars[l_idx] == 1,
@@ -405,12 +429,19 @@ Availability of doctors: A doctor may not be available for a short period of
 time due to sickness, travel, etc. But other than that they can participate in
 treatment.
 '''
-#for doc in doctor_list:
+for doc in doctor_list:
+    for time_off in doc.unavailable_times:
 
+        start_idx = util.get_time_idx(
+            time_off.from_day, time_off.from_hour, time_seg_idx)
+        end_idx = util.get_time_idx(
+            time_off.to_day, time_off.to_hour, time_seg_idx)
 
-
-
-
+        nb_visits = len(doc.visit_vars)
+        for i in range(nb_visits):
+            s1 = doc.visit_vars[i].s_var
+            # visit can be done before OR after the unavaiability.
+            mdl.add(mdl.logical_or(s1 >= end_idx, s1 <= start_idx))  # NB! +1?
 
 
 '''
@@ -420,10 +451,18 @@ maximize the number of admitted patients.
 nb_admitted_patients = mdl.integer_var()
 mdl.add(nb_admitted_patients == mdl.sum(
     pat.is_admitted_var for pat in patient_list))
+
+# optimization
 mdl.add(mdl.maximize(nb_admitted_patients))
 
+#satisfiability (comment the above obj)
+#mdl.add(nb_admitted_patients == 3)
+#mdl.add(mdl.maximize(nb_admitted_patients))
+
+
+
 # Solve
-msol = mdl.solve(LogVerbosity='Terse', Workers=1)
+msol = mdl.solve(LogVerbosity='Terse', Workers=4)
 print("Solution status: " + msol.get_solve_status())
 if msol:
     print('nb_admitted_patients =', msol.get_objective_values()[0])

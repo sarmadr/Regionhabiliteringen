@@ -6,18 +6,6 @@
         {"type": "staff_member", "from": 800, "to": 1600}
     ],
 
-    "lunch_break":
-    [
-        {"type": "younger_kid", "from": 1100, "to": 1300},
-        {"type": "older_kid", "from": 1200, "to": 1300}
-    ],
-
-    "short_break":
-    [
-        {"type": "younger_kid", "length": 15},
-        {"type": "older_kid", "length": 15}
-    ],
-
     "other_activity_duration":
     [
         {"type": "registration",          "length": 30},
@@ -29,7 +17,14 @@
         {"type": "remittent",             "length": 30}
     ],
 
-    "calendar_work_days": [1, 2, 3, 4, 5, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19]
+    "calendar_work_days": [1, 2, 3, 4, 5, 8, 9, 10, 11, 12],
+
+    "calendar_visit_days":[1, 2, 3, 8, 9, 10],
+
+    "registration_time": 
+        [
+            {"from_day": 1, "from_hour": "0800", "to_day": 1, "to_hour": "1000"}
+        ]
 
 
 }

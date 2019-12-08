@@ -35,6 +35,9 @@ class PatientData:
     visit_vars -- dict{'doctor_type': list<Visits()>} 
     is_admitted_var -- boolian decision variable. The value is decided by the
     sovler.
+    nb_treatment_days -- number of days the patient stays at the hospital
+    nb_visit_days -- number of days the patient is visited by doctors. It is
+    usually less than nb_treatment_days
     '''
 
     def __init__(self):
@@ -42,8 +45,10 @@ class PatientData:
         self.name = None
         self.age = None  # above a certain threshold considered "older kid".
         self.nb_treatment_days = None  # above 5 days will be two-week period.
+        self.nb_visit_days = None  # above 5 days will be two-week period.
         self.treatment_activities = {}
         self.break_dur = None
+        self.lunch_break = None
         self.id = None
 
         self.visit_vars_dict = {}
@@ -80,11 +85,11 @@ class DoctorData:
     '''Hold information about a doctor.
 
     Attributes:
-    unavailable_times -- populate with objects of TimeSegment.
+    unavailable_times -- list<TimeSegment>.
     visit_preference -- 'AM' or 'PM'
     working_time_limit -- hours
     id -- unique if of doctor.
-    visit_vars -- list of instances of Visits()
+    visit_vars -- list<Visits>
     '''
 
     def __init__(self):
@@ -107,10 +112,10 @@ class PolicyData:
 
     def __init__(self):
         self.work_hours = None
-        self.lunch_break = None
-        self.short_break = None
         self.other_activity_duration = None
         self.calendar_work_days = []
+        self.calendar_visit_days = []
+
 
 
 class DoctorVisits:

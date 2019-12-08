@@ -4,7 +4,9 @@
         "name": "p1",
         "age": 4,
         "treatment_days": 5,
+        "visit_days": 3,
         "break_dur": 15,
+        "lunch_break": 120,
         "activities": 
         [
             {"lakare": 30},
@@ -20,7 +22,9 @@
         "name": "p2",
         "age": 10,
         "treatment_days": 10,
+        "visit_days": 6,
         "break_dur": 15,
+        "lunch_break": 60,
         "activities": 
         [
             {"lakare": 30},
@@ -41,7 +45,9 @@
         "name": "p3",
         "age": 10,
         "treatment_days": 10,
+        "visit_days": 6,
         "break_dur": 15,
+        "lunch_break": 60,
         "activities": 
         [
             {"lakare": 30},
