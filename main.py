@@ -2,6 +2,8 @@
 from docplex.cp.model import CpoModel
 import util
 import json
+from operator import itemgetter
+
 
 # -----------------------------------------------------------------------------
 # Parameters
@@ -30,6 +32,7 @@ with open('patient_data.json', 'r') as f:
         temp_patient.name = pat['name']
         temp_patient.age = pat['age']
         temp_patient.nb_treatment_days = pat['treatment_days']
+        temp_patient.break_dur = pat['break_dur']
 
         # Treatment plan/resource usage
         # temp_patient.resource_usage = pat['activities']
@@ -167,7 +170,7 @@ for doc in doctor_list:
 
 '''
 CONSTRAINT:
-For the same# doctor and the same patient; One visit per day at most, a
+For the same doctor and the same patient; One visit per day at most, i.e. a
 doctor doesn't see the same patient more than# once, per day.
 
 sum over j (x_{k,i,j}^{l} + y_{k,i,j}^{l} <= 1) ; \forall (k, i, l)
@@ -271,6 +274,8 @@ for pat in patient_list:  # i
                                          vis_s <= pat.visit_vars_dict[doc][j].s_var)
 
                 # afternoon
+                vis_s = util.get_time_idx(l_val, '1300', time_seg_idx)
+                vis_e = util.get_time_idx(l_val, '1600', time_seg_idx)
                 cons_ub_pm = mdl.if_then(pat.visit_vars_dict[doc][j].y_vars[l_idx] == 1,
                                          pat.visit_vars_dict[doc][j].s_var + dur <= vis_e)
 
@@ -287,6 +292,7 @@ for pat in patient_list:  # i
 CONSTRAINT:
 NoOverlap 1: No simultaneous visit of the same patient by different doctors.
 
+NB! between two visits there should be a break as well. Duration = b_i
 '''
 for pat in patient_list:  # i
 
@@ -309,14 +315,62 @@ for pat in patient_list:  # i
                     for j2 in range(nb_doc2_sessions):
                         dur1 = int(
                             pat.visit_vars_dict[doc1][j1]._session_dur / segment_len)
+                        b1 = int(pat.break_dur / segment_len)
+                        dur1 += b1
+
                         dur2 = int(
                             pat.visit_vars_dict[doc2][j2]._session_dur / segment_len)
+                        b2 = b1
+                        dur2 += b2
 
                         s1 = pat.visit_vars_dict[doc1][j1].s_var
                         s2 = pat.visit_vars_dict[doc2][j2].s_var
 
                         cons = util.no_overlap_ilog(s1, s2, dur1, dur2, mdl)
                         mdl.add(cons)
+
+
+'''
+CONSTRAINT:
+NoOverlap 2: No simultaneous visit done by the same doctor; neither different
+session visit on the same patient, nor on different patients.
+'''
+for doc in doctor_list:
+    nb_visits = len(doc.visit_vars)
+    for i in range(nb_visits-1): #NB! are the range bounds correct?
+        for j in range(i+1, nb_visits):
+
+            s1 = doc.visit_vars[i].s_var
+            d1 = int(doc.visit_vars[i]._session_dur / segment_len)
+
+            s2 = doc.visit_vars[j].s_var
+            d2 = int(doc.visit_vars[j]._session_dur / segment_len)
+
+            cons = util.no_overlap_ilog(s1, s2, d1, d2, mdl)
+            mdl.add(cons)
+
+
+'''
+CONSTRAINT:
+Partial orders; for the same doctor and patient, since most visit sessions are
+identical in terms of duration, just assign a simple order to them without
+affecting the solution much. 
+
+NB! For arebetstherap. the long 120 m order must come at least second. It would
+be so, if it comes second in the json. It can also be automatically taken care
+of, using a simple if condition, that dissalows it to be the first if the visit
+has 120 minutes of duration.
+'''
+
+# is it correct? does it conflict with the nooverlaps?
+''' for pat in patient_list:  # i
+    for doc in pat.visit_vars_dict:  # k
+        nb_doc_sessions = len(pat.visit_vars_dict[doc])  
+        for i in range(nb_doc_sessions-1):
+            for j in range(i+1, nb_doc_sessions):
+                s1 = pat.visit_vars_dict[doc][i].s_var
+                s2 = pat.visit_vars_dict[doc][j].s_var
+                mdl.add(s1<=s2 + 1) '''
 
 
 '''
@@ -333,6 +387,34 @@ msol = mdl.solve(LogVerbosity='Terse', Workers=1)
 print("Solution status: " + msol.get_solve_status())
 if msol:
     print('nb_admitted_patients = ', msol.get_objective_values()[0])
+    
+    # get sol
+    for pat in patient_list:  # i
+
+        sol_array = []
+
+        print('\nPatient ', pat.name, 'schedule:')
+        print('---------------------------------')
+        for doc in pat.visit_vars_dict:  # k
+            nb_doc_sessions = len(pat.visit_vars_dict[doc])  # j
+            for j in range(nb_doc_sessions):
+                val = msol[pat.visit_vars_dict[doc][j].s_var]
+                day, time = util.get_time_by_idx(val, time_seg_idx)
+                sol_array.append((val, day, time, doc, pat.visit_vars_dict[doc][j]._session_dur))
+        
+        #for row in sol_array:
+        #    print(row)
+        #print('SORTING NOW')
+        
+        sol_array.sort(key=itemgetter(0))
+        for row in sol_array:
+            print(row[1:])
+
+                
+                
+                
+
+
 
 
 #print(util.get_time_idx(12, '0800', time_seg_idx))

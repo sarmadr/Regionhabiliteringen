@@ -2,8 +2,9 @@
     {
         "priority": 1,
         "name": "p1",
-        "age": 10,
+        "age": 4,
         "treatment_days": 5,
+        "break_dur": 15,
         "activities": 
         [
             {"lakare": 30},
@@ -19,13 +20,19 @@
         "name": "p2",
         "age": 10,
         "treatment_days": 10,
+        "break_dur": 15,
         "activities": 
         [
             {"lakare": 30},
             {"logoped": 45}, {"logoped": 45}, {"logoped": 45},
+            {"logoped": 45}, {"logoped": 45}, {"logoped": 45},
+            {"fysioterap": 45}, {"fysioterap": 45}, {"fysioterap": 45},
             {"fysioterap": 45}, {"fysioterap": 45}, {"fysioterap": 45},
             {"psykolog": 45}, {"psykolog": 45}, {"psykolog": 45},
+            {"psykolog": 45}, {"psykolog": 45}, {"psykolog": 45},
             {"pedagog": 45}, {"pedagog": 45}, {"pedagog": 45},
+            {"pedagog": 45}, {"pedagog": 45}, {"pedagog": 45},
+            {"arbetsterap": 45}, {"arbetsterap": 120}, {"arbetsterap": 45},
             {"arbetsterap": 45}, {"arbetsterap": 120}, {"arbetsterap": 45}
         ]
     },
@@ -34,30 +41,22 @@
         "name": "p3",
         "age": 10,
         "treatment_days": 10,
+        "break_dur": 15,
         "activities": 
         [
             {"lakare": 30},
             {"logoped": 45}, {"logoped": 45}, {"logoped": 45},
-            {"fysioterap": 45}, {"fysioterap": 45}, {"fysioterap": 45},
-            {"psykolog": 45}, {"psykolog": 45}, {"psykolog": 45},
-            {"pedagog": 45}, {"pedagog": 45}, {"pedagog": 45},
-            {"arbetsterap": 45}, {"arbetsterap": 120}, {"arbetsterap": 45}
-        ]
-    },
-    {
-        "priority": 1,
-        "name": "p4",
-        "age": 10,
-        "treatment_days": 10,
-        "activities": 
-        [
-            {"lakare": 30},
             {"logoped": 45}, {"logoped": 45}, {"logoped": 45},
             {"fysioterap": 45}, {"fysioterap": 45}, {"fysioterap": 45},
+            {"fysioterap": 45}, {"fysioterap": 45}, {"fysioterap": 45},
+            {"psykolog": 45}, {"psykolog": 45}, {"psykolog": 45},
             {"psykolog": 45}, {"psykolog": 45}, {"psykolog": 45},
             {"pedagog": 45}, {"pedagog": 45}, {"pedagog": 45},
+            {"pedagog": 45}, {"pedagog": 45}, {"pedagog": 45},
+            {"arbetsterap": 45}, {"arbetsterap": 120}, {"arbetsterap": 45},
             {"arbetsterap": 45}, {"arbetsterap": 120}, {"arbetsterap": 45}
         ]
     }
+
 
 ]

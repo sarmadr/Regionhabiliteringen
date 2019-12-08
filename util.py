@@ -39,6 +39,7 @@ class PatientData:
         self.age = None  # above a certain threshold considered "older kid".
         self.nb_treatment_days = None  # above 5 days will be two-week period.
         self.treatment_activities = {}
+        self.break_dur = None
         self.id = None
 
         self.visit_vars_dict = {}
@@ -178,6 +179,14 @@ def get_time_idx(day, time_str, time_seg_idx):
         raise ValueError('Time segment not found!')
 
 
+def get_time_by_idx(idx, time_seg_idx):
+    '''
+    Return day and time using index of a time segment.
+    '''
+    if(time_seg_idx[idx]._idx == idx):
+        return time_seg_idx[idx]._day, time_seg_idx[idx]._hours
+
+
 class Visits():
     '''
     idx -- global index of the class in the list of all visits. 
@@ -231,3 +240,4 @@ def no_overlap_ilog(s1, s2, d1, d2, mdl):
 
     '''
     return mdl.logical_or(s1 + d1 <= s2, s2 + d2 <= s1)
+
