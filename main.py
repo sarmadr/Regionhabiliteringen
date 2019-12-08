@@ -488,7 +488,7 @@ if msol:
 
         sol_array.sort(key=itemgetter(0))
         for row in sol_array:
-            txt = str(row[1:]) + '\n'
+            txt = str(row[1:])
             print(txt)
 
 
