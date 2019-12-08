@@ -325,7 +325,6 @@ class PatientVisits():
 
 
 class PatientVisitsVars():
-
  
     def __init__(self, patient_id, patient_name):
         # dictionary: keys are days, value are lists of days.
