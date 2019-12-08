@@ -489,6 +489,7 @@ if msol:
         sol_array.sort(key=itemgetter(0))
         for row in sol_array:
             print(row[1:])
+            print('\n')
 
 
 #print(util.get_time_idx(12, '0800', time_seg_idx))
