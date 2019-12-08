@@ -386,7 +386,7 @@ mdl.add(mdl.maximize(nb_admitted_patients))
 msol = mdl.solve(LogVerbosity='Terse', Workers=1)
 print("Solution status: " + msol.get_solve_status())
 if msol:
-    print('nb_admitted_patients = ', msol.get_objective_values()[0])
+    print('nb_admitted_patients =', msol.get_objective_values()[0])
     
     # get sol
     for pat in patient_list:  # i
